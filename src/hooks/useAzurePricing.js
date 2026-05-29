@@ -8,7 +8,6 @@ const useAzurePricing = ({ vmSize, region, os, hours, storageGb, bandwidthGb }) 
   // Fetch pricing data from Azure Pricing API
   useEffect(() => {
     const fetchPricingData = async () => {
-      // Validate inputs
       if (!vmSize || !region || !os) {
         setError('Please complete all required fields');
         return;
@@ -18,67 +17,55 @@ const useAzurePricing = ({ vmSize, region, os, hours, storageGb, bandwidthGb }) 
       setError(null);
 
       try {
-        // For demonstration purposes, we'll use mock data since the actual Azure API
-        // might have CORS restrictions or require authentication in some contexts
-        // In a production app, you would use a backend proxy to avoid CORS issues
-        
-        // Mock prices based on typical Azure pricing (these are example values)
-        const vmPriceMap = {
-          'Standard_B1s': 0.0104,
-          'Standard_B1ms': 0.0208,
-          'Standard_B2s': 0.0416,
-          'Standard_B2ms': 0.0832,
-          'Standard_D2s_v3': 0.096,
-          'Standard_D4s_v3': 0.192,
-          'Standard_D8s_v3': 0.384,
-          'Standard_E2s_v3': 0.083,
-          'Standard_E4s_v3': 0.167,
-          'Standard_E8s_v3': 0.334
+        // Map region display names to Azure ARM region names
+        const regionMap = {
+          'East US': 'eastus',
+          'East US 2': 'eastus2',
+          'West US': 'westus',
+          'West US 2': 'westus2',
+          'West US 3': 'westus3',
+          'Central US': 'centralus',
+          'North Central US': 'northcentralus',
+          'South Central US': 'southcentralus',
+          'North Europe': 'northeurope',
+          'West Europe': 'westeurope',
+          'Southeast Asia': 'southeastasia',
+          'East Asia': 'eastasia',
+          'Japan East': 'japaneast',
+          'Japan West': 'japanwest',
         };
 
-        const storagePricePerGb = 0.018; // Standard SSD disk pricing
-        const bandwidthPricePerGb = 0.087; // Outbound data transfer pricing
+        const armRegion = regionMap[region] || 'eastus';
+        const osFamily = os === 'Windows' ? 'Windows' : 'Linux';
 
-        // Get VM price based on size
-        const vmPrice = vmPriceMap[vmSize] || 0.1; // Default fallback
-        
-        // Adjust for OS (Windows typically costs more)
-        const osMultiplier = os === 'Windows' ? 1.3 : 1.0;
-        const adjustedVmPrice = vmPrice * osMultiplier;
+        const filter = `armRegionName eq '${armRegion}' and armSkuName eq '${vmSize}' and priceType eq 'Consumption'`;
+        const url = `/api/pricing?$filter=${encodeURIComponent(filter)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch pricing data');
 
-        // Calculate costs
-        const vmCost = adjustedVmPrice * hours;
-        const storageCost = storagePricePerGb * storageGb;
-        const bandwidthCost = bandwidthPricePerGb * bandwidthGb;
-        
+        const data = await response.json();
+        const item = data.Items?.[0];
+
+        if (!item) throw new Error('No pricing data found for this configuration');
+
+        const hourlyRate = item.retailPrice;
+        const vmCost = hourlyRate * hours;
+        const storageCost = storageGb * 0.018;
+        const bandwidthCost = bandwidthGb * 0.087;
         const totalMonthly = vmCost + storageCost + bandwidthCost;
-        const hourlyRate = totalMonthly / hours;
-        const annualCost = totalMonthly * 12;
-
-        // Build breakdown
-        const breakdown = [
-          { 
-            component: 'Virtual Machine', 
-            cost: vmCost 
-          },
-          { 
-            component: `Storage (${storageGb} GB)`, 
-            cost: storageCost 
-          },
-          { 
-            component: `Bandwidth (${bandwidthGb} GB)`, 
-            cost: bandwidthCost 
-          }
-        ];
 
         setPriceData({
-          hourly: hourlyRate,
+          hourly: totalMonthly / hours,
           monthly: totalMonthly,
-          annual: annualCost,
-          breakdown
+          annual: totalMonthly * 12,
+          breakdown: [
+            { component: 'Virtual Machine', cost: vmCost },
+            { component: `Storage (${storageGb} GB)`, cost: storageCost },
+            { component: `Bandwidth (${bandwidthGb} GB)`, cost: bandwidthCost },
+          ]
         });
       } catch (err) {
-        setError(err.message || 'Failed to calculate pricing');
+        setError(err.message || 'Failed to fetch pricing');
         setPriceData(null);
       } finally {
         setLoading(false);
