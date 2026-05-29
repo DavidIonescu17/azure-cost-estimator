@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
 const ConfigForm = ({ config, setConfig }) => {
   const vmSizes = [
@@ -42,6 +42,9 @@ const ConfigForm = ({ config, setConfig }) => {
     }));
   };
 
+  const vmSizeRef = useRef(null);
+  useEffect(() => { vmSizeRef.current?.focus(); }, []);
+
   return (
     <section className="form-section">
       <h2>Configuration</h2>
@@ -49,6 +52,7 @@ const ConfigForm = ({ config, setConfig }) => {
         <div className="form-group">
           <label htmlFor="vmSize">VM Size</label>
           <select
+            ref={vmSizeRef}
             id="vmSize"
             name="vmSize"
             value={config.vmSize}
