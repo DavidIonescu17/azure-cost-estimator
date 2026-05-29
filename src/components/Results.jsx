@@ -57,19 +57,19 @@ const Results = ({ config }) => {
       <div className="metrics-grid">
         <div className="metric-card">
           <h3>Hourly</h3>
-          <div className="value">$${hourly?.toFixed(4) ?? 0}</div>
+          <div className="value">${hourly?.toFixed(4) ?? 0}</div>
           <div className="unit">per hour</div>
         </div>
         
         <div className="metric-card">
           <h3>Monthly</h3>
-          <div className="value">$${monthly?.toFixed(2) ?? 0}</div>
+          <div className="value">${monthly?.toFixed(2) ?? 0}</div>
           <div className="unit">per month</div>
         </div>
         
         <div className="metric-card">
           <h3>Annual</h3>
-          <div className="value">$${annual?.toFixed(2) ?? 0}</div>
+          <div className="value">${annual?.toFixed(2) ?? 0}</div>
           <div className="unit">per year</div>
         </div>
       </div>
@@ -87,7 +87,7 @@ const Results = ({ config }) => {
             {breakdown && breakdown.map((item, index) => (
               <tr key={index}>
                 <td>{item.component}</td>
-                <td>$${item.cost.toFixed(2)}</td>
+                <td>${item.cost.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
