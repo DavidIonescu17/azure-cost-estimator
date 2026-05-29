@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 
-const ConfigForm = ({ config, setConfig }) => {
+const ConfigForm = ({ config, onConfigChange }) => {
   const vmSizes = [
     'Standard_B1s',
     'Standard_B1ms',
@@ -36,10 +36,7 @@ const ConfigForm = ({ config, setConfig }) => {
   const handleChange = (e) => {
     const { name, value, type } = e.target;
     const newValue = type === 'number' ? Number(value) : value;
-    setConfig(prev => ({
-      ...prev,
-      [name]: newValue
-    }));
+    onConfigChange(name, newValue);
   };
 
   const vmSizeRef = useRef(null);

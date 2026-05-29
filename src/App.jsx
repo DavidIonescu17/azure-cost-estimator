@@ -1,25 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer, useCallback } from 'react';
 import ConfigForm from './components/ConfigForm';
 import Results from './components/Results';
 import './App.css';
 
-function App() {
-  const [config, setConfig] = useState({
+const initialConfig = {
     vmSize: 'Standard_D2s_v3',
-    region: 'East US',
+    region: 'West Europe',
     os: 'Linux',
     hours: 730,
     storageGb: 0,
     bandwidthGb: 0
-  });
+  };
 
-  // Load saved config from sessionStorage on initial render
-  useEffect(() => {
-    const savedConfig = sessionStorage.getItem('azureConfig');
-    if (savedConfig) {
-      setConfig(JSON.parse(savedConfig));
-    }
+function configReducer(state, action) {
+  return { ...state, [action.field]: action.value };
+}
+  
+function App() {
+  const [config, dispatch] = useReducer(configReducer, initialConfig);
+
+  const handleConfigChange = useCallback((field, value) => {
+    dispatch({ field, value });
   }, []);
+
+  // Load config from sessionStorage on mount 
+  useEffect(() => {
+  const savedConfig = sessionStorage.getItem('azureConfig');
+  if (savedConfig) {
+    const parsed = JSON.parse(savedConfig);
+    Object.entries(parsed).forEach(([field, value]) => {
+      dispatch({ field, value });
+    });
+  }
+}, []);
 
   // Save config to sessionStorage whenever it changes
   useEffect(() => {
@@ -32,7 +45,7 @@ function App() {
         <h1>Azure Cost Estimator</h1>
       </header>
       <main className="app-main">
-        <ConfigForm config={config} setConfig={setConfig} />
+        <ConfigForm config={config} onConfigChange={handleConfigChange} />
         <Results config={config} />
       </main>
     </div>
